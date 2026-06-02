@@ -1,4 +1,4 @@
-name: macOS Build and Package (Intel)
+name: macOS Build and Package
 
 on:
   push:
@@ -9,8 +9,8 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build-macos-intel:
-    runs-on: macos-latest
+  build-macos:
+    runs-on: macos-15-intel
     
     steps:
       - name: Checkout code
@@ -22,19 +22,19 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Set Intel JavaFX SDK
+      - name: Set JavaFX SDK
         run: |
-          echo "JAVAFX_URL=https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_osx-x64_bin-sdk.zip" >> $GITHUB_ENV
-          echo "PLATFORM_NAME=Intel" >> $GITHUB_ENV
+          echo "JAVAFX_URL=https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_osx-x64_bin-sdk.zip" >> "$GITHUB_ENV"
+          echo "PLATFORM_NAME=Intel (x86_64)" >> "$GITHUB_ENV"
         shell: bash
 
       - name: Cache Maven
         uses: actions/cache@v4
         with:
           path: ~/.m2
-          key: macos-intel-maven-${{ hashFiles('**/pom.xml') }}
+          key: macos-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            macos-intel-maven-
+            macos-maven-
 
       - name: Build with Maven
         run: |
@@ -50,7 +50,7 @@ jobs:
           echo "JAVAFX_PATH=/tmp/javafx-sdk/lib" >> $GITHUB_ENV
         shell: bash
 
-      - name: Package DMG (Intel)
+      - name: Package DMG
         run: |
           export TMPDIR=/tmp/jpkg
           mkdir -p $TMPDIR
@@ -76,7 +76,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: BatchRenameTool-macOS-Intel
+          name: BatchRenameTool-macOS
           path: target/dist/*.dmg
           retention-days: 30
 
@@ -88,7 +88,7 @@ jobs:
           tag_name: v${{ github.run_number }}
           name: Release v${{ github.run_number }}
           body: |
-            ## 批量文件夹重命名工具 - macOS Intel 版本
+            ## 批量文件夹重命名工具 - macOS 版本
             
             ### 功能特性
             - ✅ 批量重命名文件夹（支持 Excel 导入）
@@ -96,9 +96,14 @@ jobs:
             - ✅ 自动分类文件到对应文件夹
             
             ### 系统要求
-            - macOS 10.14 或更高版本
-            - Intel 处理器 Mac
+            - macOS 10.15 或更高版本
+            - Intel 处理器 Mac（原生支持）
+            - Apple Silicon (M1/M2/M3) 可通过 Rosetta 2 运行
             - 无需安装 Java 环境（已内置 JRE）
+            
+            ### 使用说明
+            - Intel Mac：直接双击安装运行
+            - Apple Silicon Mac：需要通过 Rosetta 2 运行
           draft: false
           prerelease: false
         env:
