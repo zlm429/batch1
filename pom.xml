@@ -118,6 +118,13 @@
                                     </excludes>
                                 </filter>
                             </filters>
+                            <!-- 包含 JavaFX native 库 -->
+                            <artifactSet>
+                                <includes>
+                                    <include>org.openjfx:*</include>
+                                    <include>org.apache.poi:*</include>
+                                </includes>
+                            </artifactSet>
                         </configuration>
                     </execution>
                 </executions>
