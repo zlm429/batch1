@@ -27,6 +27,7 @@ jobs:
           curl -L https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_osx-x64_bin-sdk.zip -o javafx.zip
           unzip -q javafx.zip -d /tmp/
           echo "JAVAFX_PATH=/tmp/javafx-sdk-17.0.2/lib" >> "$GITHUB_ENV"
+          echo "JAVAFX_LIB_PATH=/tmp/javafx-sdk-17.0.2/lib" >> "$GITHUB_ENV"
 
       - name: Build with Maven
         run: |
@@ -36,6 +37,11 @@ jobs:
       - name: Package DMG
         run: |
           mkdir -p target/dist
+          
+          # 先复制 JavaFX native 库到 target 目录（jpackage 会自动打包）
+          mkdir -p target/lib
+          cp /tmp/javafx-sdk-17.0.2/lib/*.dylib target/lib/
+          
           jpackage --type dmg \
             --input target \
             --dest target/dist \
