@@ -43,7 +43,7 @@ jobs:
             --vendor "RT" \
             --mac-package-identifier com.rt.batchtool \
             --module-path "$JAVAFX_PATH" \
-            --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.controls,javafx.fxml,javafx.graphics \
+            --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.base,javafx.controls,javafx.fxml,javafx.graphics \
             --java-options "-Dfile.encoding=UTF-8" \
             --java-options "-Dprism.allowhidpi=false" \
             --verbose
@@ -73,8 +73,9 @@ jobs:
             
             ### 系统要求
             - macOS 10.15 或更高版本
-            - Intel 处理器 Mac（原生支持）
-            - 无需安装 Java 环境（已内置 JRE）
+            - Intel 处理器 Mac（原生直接双击打开）
+            - M系列Mac：右键APP显示简介勾选【使用Rosetta打开】
+            - 无需安装 Java 环境（内置完整运行时）
           draft: false
           prerelease: false
         env:
