@@ -48,7 +48,7 @@ jobs:
           unzip -q javafx.zip -d /tmp/
           mv /tmp/javafx-sdk-17.0.2 /tmp/javafx-sdk
           echo "JAVAFX_PATH=/tmp/javafx-sdk/lib" >> "$GITHUB_ENV"
-          echo "JAVAFX_NATIVE_PATH=/tmp/javafx-sdk/lib" >> "$GITHUB_ENV"
+          echo "JAVAFX_LIB_PATH=/tmp/javafx-sdk/lib" >> "$GITHUB_ENV"
         shell: bash
 
       - name: Package DMG
@@ -58,6 +58,7 @@ jobs:
           
           rm -rf target/dist
           mkdir -p target/dist
+          
           jpackage --input target \
                    --name "BatchRenameTool" \
                    --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \
@@ -68,10 +69,10 @@ jobs:
                    --vendor RT \
                    --mac-package-identifier com.rt.batchtool \
                    --module-path "${{ env.JAVAFX_PATH }}" \
-                   --add-modules java.base,java.desktop,java.xml,java.sql,jdk.unsupported,javafx.controls,javafx.fxml,javafx.base,javafx.graphics \
+                   --add-modules java.base,java.desktop,java.xml,java.sql,jdk.unsupported,javafx.controls,javafx.fxml,javafx.base,javafx.graphics,javafx.swing \
                    --java-options "-Dfile.encoding=UTF-8" \
                    --java-options "-Dprism.allowhidpi=false" \
-                   --java-options "-Djava.library.path=${{ env.JAVAFX_NATIVE_PATH }}"
+                   --java-options "-Djava.library.path=/Applications/BatchRenameTool.app/Contents/app"
         shell: bash
 
       - name: Upload DMG
