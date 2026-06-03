@@ -44,16 +44,17 @@ jobs:
 
       - name: Download JavaFX
         run: |
-          curl -L ${{ env.JAVAFX_URL }} -o javafx.zip
+          curl -L "${{ env.JAVAFX_URL }}" -o javafx.zip
           unzip -q javafx.zip -d /tmp/
           mv /tmp/javafx-sdk-17.0.2 /tmp/javafx-sdk
-          echo "JAVAFX_PATH=/tmp/javafx-sdk/lib" >> $GITHUB_ENV
+          echo "JAVAFX_PATH=/tmp/javafx-sdk/lib" >> "$GITHUB_ENV"
+          echo "JAVAFX_NATIVE_PATH=/tmp/javafx-sdk/lib" >> "$GITHUB_ENV"
         shell: bash
 
       - name: Package DMG
         run: |
           export TMPDIR=/tmp/jpkg
-          mkdir -p $TMPDIR
+          mkdir -p "$TMPDIR"
           
           rm -rf target/dist
           mkdir -p target/dist
@@ -66,10 +67,11 @@ jobs:
                    --app-version 1.0.0 \
                    --vendor RT \
                    --mac-package-identifier com.rt.batchtool \
-                   --module-path ${{ env.JAVAFX_PATH }} \
+                   --module-path "${{ env.JAVAFX_PATH }}" \
                    --add-modules java.base,java.desktop,java.xml,java.sql,jdk.unsupported,javafx.controls,javafx.fxml,javafx.base,javafx.graphics \
                    --java-options "-Dfile.encoding=UTF-8" \
-                   --java-options "-Dprism.allowhidpi=false"
+                   --java-options "-Dprism.allowhidpi=false" \
+                   --java-options "-Djava.library.path=${{ env.JAVAFX_NATIVE_PATH }}"
         shell: bash
 
       - name: Upload DMG
