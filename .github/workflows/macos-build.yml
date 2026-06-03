@@ -1,17 +1,20 @@
-name: macOS Build and Package (Intel x64)
+name: macOS Build (Intel)
 
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-macos-intel:
-    runs-on: macos-13      # ✅ 唯一正确的 Intel 打包机
+  build:
+    runs-on: macos-13   # ✅ 稳定、不排队、绝对不报错
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -23,33 +26,31 @@ jobs:
         run: |
           curl -L https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_osx-x64_bin-sdk.zip -o javafx.zip
           unzip -q javafx.zip -d /tmp/
-          echo "JAVAFX_PATH=/tmp/javafx-sdk-17.0.2/lib" >> $GITHUB_ENV
+          echo "JAVAFX_PATH=/tmp/javafx-sdk-17.0.2/lib" >> "$GITHUB_ENV"
 
       - name: Build with Maven
         run: |
           chmod +x mvnw
           ./mvnw clean package -DskipTests
 
-      - name: Package DMG (Intel)
+      - name: Package DMG
         run: |
           mkdir -p target/dist
-          jpackage --input target \
-            --name "BatchRenameTool" \
-            --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \
-            --main-class com.rt.batchfile_app.BatchfileAppApplication \
+          jpackage --type dmg \
+            --input target \
             --dest target/dist \
-            --type dmg \
+            --name "BatchRenameTool" \
+            --main-jar "batchfile_app-0.0.1-SNAPSHOT.jar" \
+            --main-class "com.rt.batchfile_app.BatchfileAppApplication" \
             --app-version 1.0.0 \
             --vendor "RT" \
             --mac-package-identifier com.rt.batchtool \
-            --module-path "$JAVAFX_PATH" \
+            --module-path "${{ env.JAVAFX_PATH }}" \
             --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.base,javafx.controls,javafx.fxml,javafx.graphics \
             --java-options "-Dfile.encoding=UTF-8" \
-            --java-options "-Dprism.allowhidpi=false" \
             --verbose
 
       - name: Upload DMG
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: BatchRenameTool-macOS-Intel
@@ -72,10 +73,9 @@ jobs:
             - ✅ 自动分类文件到对应文件夹
             
             ### 系统要求
-            - macOS 10.15 或更高版本
-            - Intel 处理器 Mac（原生直接双击打开）
-            - M系列Mac：右键APP显示简介勾选【使用Rosetta打开】
-            - 无需安装 Java 环境（内置完整运行时）
+            - macOS 10.15+
+            - Intel 处理器（原生支持）
+            - 无需安装 Java
           draft: false
           prerelease: false
         env:
