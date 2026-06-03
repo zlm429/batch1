@@ -1,16 +1,13 @@
-name: macOS Build and Package
+name: macOS Build and Package (Intel x64)
 
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
-  build-macos:
-    runs-on: macos-15-intel
+  build-macos-intel:
+    runs-on: macos-13      # ✅ 唯一正确的 Intel 打包机
     
     steps:
       - name: Checkout code
@@ -22,64 +19,40 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Set JavaFX SDK
+      - name: Download JavaFX for Intel Mac
         run: |
-          echo "JAVAFX_URL=https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_osx-x64_bin-sdk.zip" >> "$GITHUB_ENV"
-          echo "PLATFORM_NAME=Intel (x86_64)" >> "$GITHUB_ENV"
-        shell: bash
-
-      - name: Cache Maven
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: macos-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            macos-maven-
+          curl -L https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_osx-x64_bin-sdk.zip -o javafx.zip
+          unzip -q javafx.zip -d /tmp/
+          echo "JAVAFX_PATH=/tmp/javafx-sdk-17.0.2/lib" >> $GITHUB_ENV
 
       - name: Build with Maven
         run: |
           chmod +x mvnw
           ./mvnw clean package -DskipTests
-        shell: bash
 
-      - name: Download JavaFX
+      - name: Package DMG (Intel)
         run: |
-          curl -L "${{ env.JAVAFX_URL }}" -o javafx.zip
-          unzip -q javafx.zip -d /tmp/
-          mv /tmp/javafx-sdk-17.0.2 /tmp/javafx-sdk
-          echo "JAVAFX_PATH=/tmp/javafx-sdk/lib" >> "$GITHUB_ENV"
-          echo "JAVAFX_LIB_PATH=/tmp/javafx-sdk/lib" >> "$GITHUB_ENV"
-        shell: bash
-
-      - name: Package DMG
-        run: |
-          export TMPDIR=/tmp/jpkg
-          mkdir -p "$TMPDIR"
-          
-          rm -rf target/dist
           mkdir -p target/dist
-          
           jpackage --input target \
-                   --name "BatchRenameTool" \
-                   --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \
-                   --main-class com.rt.batchfile_app.BatchfileAppApplication \
-                   --dest target/dist \
-                   --type dmg \
-                   --app-version 1.0.0 \
-                   --vendor RT \
-                   --mac-package-identifier com.rt.batchtool \
-                   --module-path "${{ env.JAVAFX_PATH }}" \
-                   --add-modules java.base,java.desktop,java.xml,java.sql,jdk.unsupported,javafx.controls,javafx.fxml,javafx.base,javafx.graphics,javafx.swing \
-                   --java-options "-Dfile.encoding=UTF-8" \
-                   --java-options "-Dprism.allowhidpi=false" \
-                   --java-options "-Djava.library.path=/Applications/BatchRenameTool.app/Contents/app"
-        shell: bash
+            --name "BatchRenameTool" \
+            --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \
+            --main-class com.rt.batchfile_app.BatchfileAppApplication \
+            --dest target/dist \
+            --type dmg \
+            --app-version 1.0.0 \
+            --vendor "RT" \
+            --mac-package-identifier com.rt.batchtool \
+            --module-path "$JAVAFX_PATH" \
+            --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.controls,javafx.fxml,javafx.graphics \
+            --java-options "-Dfile.encoding=UTF-8" \
+            --java-options "-Dprism.allowhidpi=false" \
+            --verbose
 
       - name: Upload DMG
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: BatchRenameTool-macOS
+          name: BatchRenameTool-macOS-Intel
           path: target/dist/*.dmg
           retention-days: 30
 
@@ -91,7 +64,7 @@ jobs:
           tag_name: v${{ github.run_number }}
           name: Release v${{ github.run_number }}
           body: |
-            ## 批量文件夹重命名工具 - macOS 版本
+            ## 批量文件夹重命名工具 - macOS Intel 版本
             
             ### 功能特性
             - ✅ 批量重命名文件夹（支持 Excel 导入）
@@ -101,12 +74,7 @@ jobs:
             ### 系统要求
             - macOS 10.15 或更高版本
             - Intel 处理器 Mac（原生支持）
-            - Apple Silicon (M1/M2/M3) 可通过 Rosetta 2 运行
             - 无需安装 Java 环境（已内置 JRE）
-            
-            ### 使用说明
-            - Intel Mac：直接双击安装运行
-            - Apple Silicon Mac：需要通过 Rosetta 2 运行
           draft: false
           prerelease: false
         env:
