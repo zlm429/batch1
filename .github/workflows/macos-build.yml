@@ -11,8 +11,8 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-13   # ✅ 稳定、不排队、绝对不报错
-    
+    runs-on: macos-13   # ✅ 稳定、不排队
+
     steps:
       - uses: actions/checkout@v4
 
@@ -27,7 +27,6 @@ jobs:
           curl -L https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_osx-x64_bin-sdk.zip -o javafx.zip
           unzip -q javafx.zip -d /tmp/
           echo "JAVAFX_PATH=/tmp/javafx-sdk-17.0.2/lib" >> "$GITHUB_ENV"
-          echo "JAVAFX_LIB_PATH=/tmp/javafx-sdk-17.0.2/lib" >> "$GITHUB_ENV"
 
       - name: Build with Maven
         run: |
@@ -38,7 +37,7 @@ jobs:
         run: |
           mkdir -p target/dist
           
-          # 先复制 JavaFX native 库到 target 目录（jpackage 会自动打包）
+          # 复制 JavaFX native 库（解决 No toolkit found 错误）
           mkdir -p target/lib
           cp /tmp/javafx-sdk-17.0.2/lib/*.dylib target/lib/
           
