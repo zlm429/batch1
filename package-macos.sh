@@ -12,18 +12,51 @@ if ! command -v mvn &> /dev/null && [ ! -f "./mvnw" ]; then
     exit 1
 fi
 
-# 2. 检查 JDK 是否安装
+# 2. 检查并安装 JDK
 if ! command -v java &> /dev/null; then
-    echo "❌ 错误: 未找到 Java"
-    echo "请先安装 JDK 17 或更高版本"
-    echo "可以使用: brew install openjdk@17"
-    exit 1
+    echo "⚠️  未找到 Java"
+    echo " 正在检查 Homebrew..."
+    
+    if ! command -v brew &> /dev/null; then
+        echo "❌ 错误: 未找到 Homebrew"
+        echo "请先安装 Homebrew: /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+        echo "或手动安装 JDK 17"
+        exit 1
+    fi
+    
+    echo " 正在安装 JDK 17..."
+    brew install openjdk@17
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ JDK 安装失败"
+        echo "请手动安装: brew install openjdk@17"
+        exit 1
+    fi
+    
+    echo "✅ JDK 17 安装成功"
+    echo ""
 fi
 
 JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f2 | cut -d'.' -f1)
 if [ "$JAVA_VERSION" -lt "17" ]; then
-    echo "❌ 错误: 需要 JDK 17 或更高版本，当前版本: $JAVA_VERSION"
-    exit 1
+    echo "⚠️  Java 版本过低: $JAVA_VERSION"
+    echo "📦 正在安装 JDK 17..."
+    
+    if ! command -v brew &> /dev/null; then
+        echo " 错误: 需要 Homebrew 来安装 JDK"
+        echo "请先安装 Homebrew 或手动安装 JDK 17+"
+        exit 1
+    fi
+    
+    brew install openjdk@17
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ JDK 安装失败"
+        exit 1
+    fi
+    
+    echo "✅ JDK 17 安装成功"
+    echo ""
 fi
 
 echo "✅ Java 版本: $(java -version 2>&1 | head -1)"
