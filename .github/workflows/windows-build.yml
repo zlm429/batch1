@@ -89,7 +89,7 @@ jobs:
           set JAVAFX_PATH=%~dp0lib
           jre\bin\java.exe ^
             --module-path "%JAVAFX_PATH%" ^
-            --add-modules java.base,java.desktop,java.xml,java.sql,jdk.unsupported,javafx.controls,javafx.fxml ^
+            --add-modules java.base,java.desktop,java.xml,java.sql,jdk.unsupported,javafx.controls,javafx.fxml,javafx.graphics,javafx.base ^
             -Djava.library.path="%JAVAFX_PATH%" ^
             -jar batchfile_app-0.0.1-SNAPSHOT.jar
           if errorlevel 1 (

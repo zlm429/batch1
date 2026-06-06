@@ -37,7 +37,7 @@
                 style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20 10 20;"/>
         <TextArea fx:id="selectedFoldersArea" promptText="选中文件夹后按Ctrl+C复制，然后点击上方按钮..." 
                   editable="false" wrapText="true"
-                  style="-fx-font-size: 12px; -fx-font-family: 'Microsoft YaHei', 'SimSun', 'Consolas'; -fx-text-fill: #333333;"
+                  style="-fx-font-size: 12px; -fx-font-family: 'PingFang SC', 'STHeiti', 'Microsoft YaHei', 'Consolas'; -fx-text-fill: #333333;"
                   prefHeight="100"/>
     </VBox>
 
@@ -58,7 +58,7 @@
         <Label text="操作日志:"/>
         <TextArea fx:id="logArea" editable="false" wrapText="true" 
                   VBox.vgrow="ALWAYS" 
-                  style="-fx-font-family: 'Microsoft YaHei', 'SimSun', 'Consolas'; -fx-font-size: 12px;"/>
+                  style="-fx-font-family: 'PingFang SC', 'STHeiti', 'Microsoft YaHei', 'Consolas'; -fx-font-size: 12px;"/>
     </VBox>
 
     <!-- 使用说明 -->

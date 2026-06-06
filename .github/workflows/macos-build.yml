@@ -11,10 +11,10 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-15-intel   # ✅ 稳定、不排队
+    runs-on: macos-13   # ✅ Intel x64 架构，稳定不排队
 
     steps:
-      - uses: actions/checkout@v4+
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -53,6 +53,7 @@ jobs:
             --module-path "${{ env.JAVAFX_PATH }}" \
             --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.base,javafx.controls,javafx.fxml,javafx.graphics \
             --java-options "-Dfile.encoding=UTF-8" \
+            --java-options "-Dprism.allowhidpi=false" \
             --verbose
 
       - name: Upload DMG
