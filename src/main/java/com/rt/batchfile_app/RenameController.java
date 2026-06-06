@@ -116,69 +116,74 @@ public class RenameController {
         selectedFiles.clear();
         
         try {
-            // 获取系统剪贴板
-            java.awt.Toolkit toolkit = java.awt.Toolkit.getDefaultToolkit();
-            java.awt.datatransfer.Clipboard clipboard = toolkit.getSystemClipboard();
-            java.awt.datatransfer.Transferable content = clipboard.getContents(null);
+            // 使用 JavaFX 原生剪贴板（跨平台兼容）
+            javafx.scene.input.Clipboard clipboard = javafx.scene.input.Clipboard.getSystemClipboard();
             
-            if (content == null) {
-                showWarning("剪贴板为空，请先在资源管理器中选中文件夹或文件并按 Ctrl+C 复制");
-                return;
-            }
-            
-            // 尝试获取文件列表
-            if (content.isDataFlavorSupported(java.awt.datatransfer.DataFlavor.javaFileListFlavor)) {
-                @SuppressWarnings("unchecked")
-                java.util.List<File> files = (java.util.List<File>) content.getTransferData(java.awt.datatransfer.DataFlavor.javaFileListFlavor);
+            if (clipboard == null || !clipboard.hasFiles()) {
+                // 如果 JavaFX 剪贴板没有文件，尝试 AWT 剪贴板（Windows 兼容）
+                try {
+                    java.awt.Toolkit toolkit = java.awt.Toolkit.getDefaultToolkit();
+                    java.awt.datatransfer.Clipboard awtClipboard = toolkit.getSystemClipboard();
+                    java.awt.datatransfer.Transferable content = awtClipboard.getContents(null);
+                    
+                    if (content != null && content.isDataFlavorSupported(java.awt.datatransfer.DataFlavor.javaFileListFlavor)) {
+                        @SuppressWarnings("unchecked")
+                        java.util.List<File> files = (java.util.List<File>) content.getTransferData(java.awt.datatransfer.DataFlavor.javaFileListFlavor);
+                        
+                        for (File file : files) {
+                            if (file.isDirectory()) {
+                                selectedFolderFiles.add(file);
+                            } else if (file.isFile()) {
+                                selectedFiles.add(file);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    // AWT 剪贴板失败，忽略
+                }
                 
-                for (File file : files) {
+                if (selectedFolderFiles.isEmpty() && selectedFiles.isEmpty()) {
+                    showWarning("剪贴板为空，请先在资源管理器中选中文件夹或文件并按 Ctrl+C (macOS: Cmd+C) 复制");
+                    return;
+                }
+            } else {
+                // JavaFX 剪贴板有文件
+                for (File file : clipboard.getFiles()) {
                     if (file.isDirectory()) {
                         selectedFolderFiles.add(file);
                     } else if (file.isFile()) {
                         selectedFiles.add(file);
                     }
                 }
-                
-                if (selectedFolderFiles.isEmpty() && selectedFiles.isEmpty()) {
-                    showWarning("剪贴板中没有找到文件或文件夹，请先选中后再复制");
-                    return;
-                }
-                
-                // 显示选中的文件夹和文件路径
-                StringBuilder sb = new StringBuilder();
-                if (!selectedFolderFiles.isEmpty()) {
-                    sb.append("文件夹:\n");
-                    for (File folder : selectedFolderFiles) {
-                        sb.append("  ").append(folder.getAbsolutePath()).append("\n");
-                    }
-                }
-                if (!selectedFiles.isEmpty()) {
-                    sb.append("\n文件:\n");
-                    for (File file : selectedFiles) {
-                        sb.append("  ").append(file.getAbsolutePath()).append("\n");
-                    }
-                }
-                selectedFoldersArea.setText(sb.toString());
-                
-                // 获取父目录（所有选中项目的共同父目录）
-                if (!selectedFolderFiles.isEmpty()) {
-                    parentDirectory = selectedFolderFiles.get(0).getParentFile();
-                } else if (!selectedFiles.isEmpty()) {
-                    parentDirectory = selectedFiles.get(0).getParentFile();
-                }
-                if (parentDirectory != null) {
-                    folderPathField.setText(parentDirectory.getAbsolutePath());
-                }
-                
-                appendLog("从剪贴板获取了 " + selectedFolderFiles.size() + " 个文件夹和 " + selectedFiles.size() + " 个文件");
-            } else if (content.isDataFlavorSupported(java.awt.datatransfer.DataFlavor.stringFlavor)) {
-                // 如果是文本格式（可能是文件路径）
-                String text = (String) content.getTransferData(java.awt.datatransfer.DataFlavor.stringFlavor);
-                appendLog("检测到文本内容，请先在资源管理器中选中文件夹或文件后按Ctrl+C复制");
-                showWarning("检测到文本内容，请在资源管理器中选中文件夹或文件后按Ctrl+C复制");
-            } else {
-                showWarning("剪贴板内容格式不支持，请在资源管理器中选中文件夹或文件后按Ctrl+C复制");
             }
+            
+            // 显示选中的文件夹和文件路径
+            StringBuilder sb = new StringBuilder();
+            if (!selectedFolderFiles.isEmpty()) {
+                sb.append("文件夹:\n");
+                for (File folder : selectedFolderFiles) {
+                    sb.append("  ").append(folder.getAbsolutePath()).append("\n");
+                }
+            }
+            if (!selectedFiles.isEmpty()) {
+                sb.append("\n文件:\n");
+                for (File file : selectedFiles) {
+                    sb.append("  ").append(file.getAbsolutePath()).append("\n");
+                }
+            }
+            selectedFoldersArea.setText(sb.toString());
+            
+            // 获取父目录（所有选中项目的共同父目录）
+            if (!selectedFolderFiles.isEmpty()) {
+                parentDirectory = selectedFolderFiles.get(0).getParentFile();
+            } else if (!selectedFiles.isEmpty()) {
+                parentDirectory = selectedFiles.get(0).getParentFile();
+            }
+            if (parentDirectory != null) {
+                folderPathField.setText(parentDirectory.getAbsolutePath());
+            }
+            
+            appendLog("从剪贴板获取了 " + selectedFolderFiles.size() + " 个文件夹和 " + selectedFiles.size() + " 个文件");
         } catch (Exception e) {
             showError("读取剪贴板失败: " + e.getMessage());
             e.printStackTrace();
