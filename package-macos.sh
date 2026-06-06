@@ -5,25 +5,48 @@ echo "批量重命名工具 - macOS 打包脚本"
 echo "========================================="
 echo ""
 
-# 1. 检查 Maven 是否安装
+# 1. 检查并安装 Homebrew
+if ! command -v brew &> /dev/null; then
+    echo "⚠️  未找到 Homebrew"
+    echo " 正在安装 Homebrew..."
+    echo ""
+    
+    # 尝试从多个源安装
+    if /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+        echo "✅ Homebrew 安装成功"
+    else
+        echo "⚠️  官方源安装失败，尝试国内镜像源..."
+        if /bin/bash -c "$(curl -fsSL https://gitee.com/ineo6/homebrew-install/raw/master/install.sh)"; then
+            echo "✅ Homebrew 安装成功（国内镜像）"
+        else
+            echo "❌ Homebrew 安装失败"
+            echo "请手动安装: https://brew.sh"
+            exit 1
+        fi
+    fi
+    
+    echo ""
+    # 将 brew 添加到 PATH（Apple Silicon Mac 需要）
+    if [ -f /opt/homebrew/bin/brew ]; then
+        eval $(/opt/homebrew/bin/brew shellenv)
+    elif [ -f /usr/local/bin/brew ]; then
+        eval $(/usr/local/bin/brew shellenv)
+    fi
+    
+    echo "✅ Homebrew 已就绪"
+    echo ""
+fi
+
+# 2. 检查 Maven 是否安装
 if ! command -v mvn &> /dev/null && [ ! -f "./mvnw" ]; then
-    echo "❌ 错误: 未找到 Maven 或 Maven Wrapper"
+    echo " 错误: 未找到 Maven 或 Maven Wrapper"
     echo "请确保在项目根目录运行此脚本"
     exit 1
 fi
 
-# 2. 检查并安装 JDK
+# 3. 检查并安装 JDK
 if ! command -v java &> /dev/null; then
     echo "⚠️  未找到 Java"
-    echo " 正在检查 Homebrew..."
-    
-    if ! command -v brew &> /dev/null; then
-        echo "❌ 错误: 未找到 Homebrew"
-        echo "请先安装 Homebrew: /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
-        echo "或手动安装 JDK 17"
-        exit 1
-    fi
-    
     echo " 正在安装 JDK 17..."
     brew install openjdk@17
     
@@ -39,15 +62,8 @@ fi
 
 JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f2 | cut -d'.' -f1)
 if [ "$JAVA_VERSION" -lt "17" ]; then
-    echo "⚠️  Java 版本过低: $JAVA_VERSION"
+    echo "️  Java 版本过低: $JAVA_VERSION"
     echo "📦 正在安装 JDK 17..."
-    
-    if ! command -v brew &> /dev/null; then
-        echo " 错误: 需要 Homebrew 来安装 JDK"
-        echo "请先安装 Homebrew 或手动安装 JDK 17+"
-        exit 1
-    fi
-    
     brew install openjdk@17
     
     if [ $? -ne 0 ]; then
