@@ -30,7 +30,7 @@ echo "✅ Java 版本: $(java -version 2>&1 | head -1)"
 echo ""
 
 # 3. 编译项目
-echo " 正在编译项目..."
+echo "📦 正在编译项目..."
 if [ -f "./mvnw" ]; then
     chmod +x ./mvnw
     ./mvnw clean package -DskipTests
@@ -67,7 +67,14 @@ JAVAFX_PATH="./javafx-sdk-17.0.2/lib"
 echo "✅ JavaFX SDK 路径: $JAVAFX_PATH"
 echo ""
 
-# 5. 打包应用
+# 5. 复制 JavaFX native 库（解决 No toolkit found 错误）
+echo "🔧 正在准备 native 库..."
+mkdir -p target/lib
+cp javafx-sdk-17.0.2/lib/*.dylib target/lib/
+echo "✅ Native 库已复制到 target/lib/"
+echo ""
+
+# 6. 打包应用
 echo "📦 正在打包 DMG..."
 jpackage --input target \
          --name "BatchRenameTool" \
@@ -78,9 +85,10 @@ jpackage --input target \
          --app-version 1.0.0 \
          --vendor RT \
          --module-path "$JAVAFX_PATH" \
-         --add-modules java.base,java.desktop,java.xml,java.sql,jdk.unsupported,javafx.controls,javafx.fxml,javafx.base,javafx.graphics \
+         --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.base,javafx.controls,javafx.fxml,javafx.graphics \
          --java-options "-Dfile.encoding=UTF-8" \
-         --java-options "-Dprism.allowhidpi=false"
+         --java-options "-Dprism.allowhidpi=false" \
+         --verbose
 
 if [ $? -ne 0 ]; then
     echo "❌ 打包失败"
@@ -94,7 +102,7 @@ echo "========================================="
 echo ""
 echo "📁 DMG 文件位置: target/dist/BatchRenameTool-1.0.0.dmg"
 echo ""
-echo "📋 安装步骤："
+echo " 安装步骤："
 echo "1. 双击 DMG 文件"
 echo "2. 将 BatchRenameTool 拖拽到 Applications 文件夹"
 echo "3. 首次运行：右键点击应用 → 选择'打开' → 再次点击'打开'"
