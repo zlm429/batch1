@@ -64,6 +64,10 @@
                     <source>17</source>
                     <target>17</target>
                     <encoding>UTF-8</encoding>
+                    <!-- 禁用注解处理器警告 -->
+                    <compilerArgs>
+                        <arg>-Xlint:none</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
 
@@ -118,13 +122,6 @@
                                     </excludes>
                                 </filter>
                             </filters>
-                            <!-- 包含 JavaFX native 库 -->
-                            <artifactSet>
-                                <includes>
-                                    <include>org.openjfx:*</include>
-                                    <include>org.apache.poi:*</include>
-                                </includes>
-                            </artifactSet>
                         </configuration>
                     </execution>
                 </executions>

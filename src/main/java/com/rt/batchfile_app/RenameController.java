@@ -86,7 +86,11 @@ public class RenameController {
      */
     private void setupPasteHandler() {
         excelPathField.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode() == javafx.scene.input.KeyCode.V) {
+            // 跨平台支持: Windows/Linux 用 Ctrl+V, macOS 用 Cmd+V
+            boolean isPaste = (event.isControlDown() || event.isMetaDown()) && 
+                             event.getCode() == javafx.scene.input.KeyCode.V;
+            
+            if (isPaste) {
                 // 延迟执行，让粘贴操作完成后再处理
                 javafx.application.Platform.runLater(() -> {
                     String path = excelPathField.getText();
@@ -451,10 +455,12 @@ public class RenameController {
     }
 
     /**
-     * 清理文件名中的非法字符
+     * 清理文件名中的非法字符（跨平台兼容）
+     * Windows: \ / : * ? " < > |
+     * macOS:   / (冒号: 会被系统自动转换)
      */
     private String sanitizeFileName(String fileName) {
-        // Windows文件名不能包含以下字符：\ / : * ? " < > |
+        // 替换所有平台的非法字符
         return fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
     }
 
