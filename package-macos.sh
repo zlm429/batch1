@@ -199,39 +199,20 @@ echo ""
 # 9. 打包应用
 echo "📦 正在打包 DMG..."
 
-# 根据是否有图标文件，执行不同的 jpackage 命令
-if [ -n "$ICON_FLAG" ]; then
-    # 有图标文件
-    jpackage --input target/jpackage-input \
-             --name BatchRenameTool \
-             --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \
-             --main-class com.rt.batchfile_app.BatchfileAppApplication \
-             --dest target/dist \
-             --type dmg \
-             --app-version 1.0.0 \
-             --vendor RT \
-             --module-path "$JAVAFX_PATH" \
-             --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.base,javafx.controls,javafx.fxml,javafx.graphics \
-             --java-options "-Dfile.encoding=UTF-8" \
-             --java-options "-Dprism.allowhidpi=false" \
-             $ICON_FLAG \
-             --verbose
-else
-    # 无图标文件
-    jpackage --input target/jpackage-input \
-             --name BatchRenameTool \
-             --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \
-             --main-class com.rt.batchfile_app.BatchfileAppApplication \
-             --dest target/dist \
-             --type dmg \
-             --app-version 1.0.0 \
-             --vendor RT \
-             --module-path "$JAVAFX_PATH" \
-             --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.base,javafx.controls,javafx.fxml,javafx.graphics \
-             --java-options "-Dfile.encoding=UTF-8" \
-             --java-options "-Dprism.allowhidpi=false" \
-             --verbose
-fi
+# 执行 jpackage 打包
+jpackage --input target/jpackage-input \
+         --name BatchRenameTool \
+         --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \
+         --main-class com.rt.batchfile_app.BatchfileAppApplication \
+         --dest target/dist \
+         --type dmg \
+         --app-version 1.0.0 \
+         --vendor RT \
+         --module-path "$JAVAFX_PATH" \
+         --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.base,javafx.controls,javafx.fxml,javafx.graphics \
+         --java-options "-Dfile.encoding=UTF-8" \
+         --java-options "-Dprism.allowhidpi=false" \
+         --verbose
 
 if [ $? -ne 0 ]; then
     echo "❌ 打包失败"
