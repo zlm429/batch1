@@ -118,10 +118,24 @@ fi
 echo "✅ 编译成功"
 echo ""
 
-# 5. 下载 JavaFX SDK
-JAVAFX_URL="https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_osx-x64_bin-sdk.zip"
-JAVAFX_BACKUP_URL="https://github.com/openjfx/javafx-sdk/releases/download/17.0.2/openjfx-17.0.2_osx-x64_bin-sdk.zip"
-JAVAFX_ZIP="javafx-sdk.zip"
+# 5. 下载 JavaFX SDK（根据架构选择版本）
+echo "🔍 检测系统架构..."
+ARCH=$(uname -m)
+if [ "$ARCH" = "arm64" ]; then
+    echo "✅ 检测到 Apple Silicon (ARM64) 架构"
+    JAVAFX_PLATFORM="osx-aarch64"
+elif [ "$ARCH" = "x86_64" ]; then
+    echo "✅ 检测到 Intel (x86_64) 架构"
+    JAVAFX_PLATFORM="osx-x64"
+else
+    echo "❌ 不支持的架构: $ARCH"
+    exit 1
+fi
+echo ""
+
+JAVAFX_URL="https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_${JAVAFX_PLATFORM}_bin-sdk.zip"
+JAVAFX_BACKUP_URL="https://github.com/openjfx/javafx-sdk/releases/download/17.0.2/openjfx-17.0.2_${JAVAFX_PLATFORM}_bin-sdk.zip"
+JAVAFX_ZIP="javafx-sdk-${JAVAFX_PLATFORM}.zip"
 
 if [ ! -f "$JAVAFX_ZIP" ]; then
     echo "📥 正在下载 JavaFX SDK..."
@@ -139,6 +153,10 @@ fi
 
 if [ ! -d "javafx-sdk-17.0.2" ]; then
     unzip -o "$JAVAFX_ZIP"
+    # 如果解压后是 javafx-sdk-17.0.2_platform 目录，重命名为 javafx-sdk-17.0.2
+    if [ -d "javafx-sdk-17.0.2_${JAVAFX_PLATFORM}" ]; then
+        mv "javafx-sdk-17.0.2_${JAVAFX_PLATFORM}" "javafx-sdk-17.0.2"
+    fi
 else
     echo "✅ JavaFX SDK 已解压，跳过解压"
 fi
@@ -154,35 +172,39 @@ mkdir -p target/jpackage-input
 echo "✅ 清理完成"
 echo ""
 
-# 7. 准备打包文件(只复制必要的 JAR)
+# 7. 准备打包文件（复制 JAR + JavaFX native 库）
 echo "📂 正在准备打包文件..."
 cp target/batchfile_app-0.0.1-SNAPSHOT.jar target/jpackage-input/
-echo "✅ 文件已复制到 target/jpackage-input/"
+
+# 复制 JavaFX native 库（解决 No toolkit found 错误）
+mkdir -p target/jpackage-input/lib
+cp javafx-sdk-17.0.2/lib/*.dylib target/jpackage-input/lib/
+echo "✅ Native 库已复制到 target/jpackage-input/lib/"
 echo ""
 
 # 8. 检查图标文件
-ICON_ARGS=""
+ICON_FLAG=""
 if [ -f "src/main/resources/icon.icns" ]; then
-    ICON_ARGS="--icon src/main/resources/icon.icns"
+    ICON_FLAG="--icon src/main/resources/icon.icns"
     echo "✅ 使用图标: icon.icns"
 elif [ -f "src/main/resources/icon.png" ]; then
     # jpackage 支持 PNG 但建议转换为 icns
-    ICON_ARGS="--icon src/main/resources/icon.png"
+    ICON_FLAG="--icon src/main/resources/icon.png"
     echo "⚠️  建议将 PNG 转换为 icns 格式以获得最佳效果"
 else
-    echo "⚠️  未找到图标文件，将使用默认图标"
+    echo "⚠️  未找到图标文件，跳过"
 fi
 echo ""
 
 # 9. 打包应用
 echo "📦 正在打包 DMG..."
 
-# 构建 jpackage 命令
+# 构建 jpackage 命令（动态添加图标参数）
 JPACKAGE_CMD="jpackage --input target/jpackage-input \\\n         --name BatchRenameTool \\\n         --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \\\n         --main-class com.rt.batchfile_app.BatchfileAppApplication \\\n         --dest target/dist \\\n         --type dmg \\\n         --app-version 1.0.0 \\\n         --vendor RT \\\n         --module-path \"$JAVAFX_PATH\" \\\n         --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.base,javafx.controls,javafx.fxml,javafx.graphics \\\n         --java-options \"-Dfile.encoding=UTF-8\" \\\n         --java-options \"-Dprism.allowhidpi=false\" \\\n         --verbose"
 
 # 如果有图标文件，添加图标参数
-if [ -n "$ICON_ARGS" ]; then
-    JPACKAGE_CMD="$JPACKAGE_CMD $ICON_ARGS"
+if [ -n "$ICON_FLAG" ]; then
+    JPACKAGE_CMD="$JPACKAGE_CMD $ICON_FLAG"
 fi
 
 # 执行打包
