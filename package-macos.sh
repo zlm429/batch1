@@ -200,15 +200,27 @@ echo ""
 echo "📦 正在打包 DMG..."
 
 # 构建 jpackage 命令（动态添加图标参数）
-JPACKAGE_CMD="jpackage --input target/jpackage-input \\\n         --name BatchRenameTool \\\n         --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \\\n         --main-class com.rt.batchfile_app.BatchfileAppApplication \\\n         --dest target/dist \\\n         --type dmg \\\n         --app-version 1.0.0 \\\n         --vendor RT \\\n         --module-path \"$JAVAFX_PATH\" \\\n         --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.base,javafx.controls,javafx.fxml,javafx.graphics \\\n         --java-options \"-Dfile.encoding=UTF-8\" \\\n         --java-options \"-Dprism.allowhidpi=false\" \\\n         --verbose"
-
-# 如果有图标文件，添加图标参数
 if [ -n "$ICON_FLAG" ]; then
-    JPACKAGE_CMD="$JPACKAGE_CMD $ICON_FLAG"
+    ICON_PARAM="$ICON_FLAG"
+else
+    ICON_PARAM=""
 fi
 
 # 执行打包
-eval $JPACKAGE_CMD
+jpackage --input target/jpackage-input \
+         --name BatchRenameTool \
+         --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \
+         --main-class com.rt.batchfile_app.BatchfileAppApplication \
+         --dest target/dist \
+         --type dmg \
+         --app-version 1.0.0 \
+         --vendor RT \
+         --module-path "$JAVAFX_PATH" \
+         --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.base,javafx.controls,javafx.fxml,javafx.graphics \
+         --java-options "-Dfile.encoding=UTF-8" \
+         --java-options "-Dprism.allowhidpi=false" \
+         $ICON_PARAM \
+         --verbose
 
 if [ $? -ne 0 ]; then
     echo "❌ 打包失败"
