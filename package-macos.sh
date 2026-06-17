@@ -56,6 +56,12 @@ if ! command -v java &> /dev/null; then
         exit 1
     fi
     
+    # 配置 JDK 环境变量
+    if [ -f /usr/libexec/java_home ]; then
+        export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+        echo "✅ JAVA_HOME 已设置: $JAVA_HOME"
+    fi
+    
     echo "✅ JDK 17 安装成功"
     echo ""
 fi
@@ -85,6 +91,16 @@ fi
 echo "✅ Java 版本检查通过"
 echo ""
 
+# 4. 检查 jpackage 是否可用
+if ! command -v jpackage &> /dev/null; then
+    echo "❌ 未找到 jpackage 工具"
+    echo "jpackage 需要 JDK 14 或更高版本"
+    echo "请确保已正确安装 JDK 17"
+    exit 1
+fi
+echo "✅ jpackage 工具已就绪"
+echo ""
+
 # 4. 编译项目
 echo "📦 正在编译项目..."
 if [ -f "./mvnw" ]; then
@@ -104,11 +120,19 @@ echo ""
 
 # 5. 下载 JavaFX SDK
 JAVAFX_URL="https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_osx-x64_bin-sdk.zip"
+JAVAFX_BACKUP_URL="https://github.com/openjfx/javafx-sdk/releases/download/17.0.2/openjfx-17.0.2_osx-x64_bin-sdk.zip"
 JAVAFX_ZIP="javafx-sdk.zip"
 
 if [ ! -f "$JAVAFX_ZIP" ]; then
     echo "📥 正在下载 JavaFX SDK..."
-    curl -L "$JAVAFX_URL" -o "$JAVAFX_ZIP"
+    if ! curl -L "$JAVAFX_URL" -o "$JAVAFX_ZIP"; then
+        echo "⚠️  官方源下载失败，尝试备用源..."
+        if ! curl -L "$JAVAFX_BACKUP_URL" -o "$JAVAFX_ZIP"; then
+            echo "❌ JavaFX SDK 下载失败"
+            echo "请手动下载并解压到项目根目录"
+            exit 1
+        fi
+    fi
 else
     echo "✅ JavaFX SDK 已存在，跳过下载"
 fi
@@ -125,7 +149,7 @@ echo ""
 
 # 6. 清理旧的打包产物
 echo "🧹 正在清理旧的打包产物..."
-rm -rf target/dist
+rm -rf target/dist target/jpackage-input
 mkdir -p target/jpackage-input
 echo "✅ 清理完成"
 echo ""
@@ -137,35 +161,32 @@ echo "✅ 文件已复制到 target/jpackage-input/"
 echo ""
 
 # 8. 检查图标文件
-ICON_FLAG=""
+ICON_ARGS=""
 if [ -f "src/main/resources/icon.icns" ]; then
-    ICON_FLAG="--icon src/main/resources/icon.icns"
+    ICON_ARGS="--icon src/main/resources/icon.icns"
     echo "✅ 使用图标: icon.icns"
 elif [ -f "src/main/resources/icon.png" ]; then
     # jpackage 支持 PNG 但建议转换为 icns
-    ICON_FLAG="--icon src/main/resources/icon.png"
+    ICON_ARGS="--icon src/main/resources/icon.png"
     echo "⚠️  建议将 PNG 转换为 icns 格式以获得最佳效果"
 else
-    echo "⚠️  未找到图标文件，跳过"
+    echo "⚠️  未找到图标文件，将使用默认图标"
 fi
 echo ""
 
 # 9. 打包应用
 echo "📦 正在打包 DMG..."
-jpackage --input target/jpackage-input \
-         --name "BatchRenameTool" \
-         --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \
-         --main-class com.rt.batchfile_app.BatchfileAppApplication \
-         --dest target/dist \
-         --type dmg \
-         --app-version 1.0.0 \
-         --vendor RT \
-         --module-path "$JAVAFX_PATH" \
-         --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.base,javafx.controls,javafx.fxml,javafx.graphics \
-         --java-options "-Dfile.encoding=UTF-8" \
-         --java-options "-Dprism.allowhidpi=false" \
-         $ICON_FLAG \
-         --verbose
+
+# 构建 jpackage 命令
+JPACKAGE_CMD="jpackage --input target/jpackage-input \\\n         --name BatchRenameTool \\\n         --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \\\n         --main-class com.rt.batchfile_app.BatchfileAppApplication \\\n         --dest target/dist \\\n         --type dmg \\\n         --app-version 1.0.0 \\\n         --vendor RT \\\n         --module-path \"$JAVAFX_PATH\" \\\n         --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.base,javafx.controls,javafx.fxml,javafx.graphics \\\n         --java-options \"-Dfile.encoding=UTF-8\" \\\n         --java-options \"-Dprism.allowhidpi=false\" \\\n         --verbose"
+
+# 如果有图标文件，添加图标参数
+if [ -n "$ICON_ARGS" ]; then
+    JPACKAGE_CMD="$JPACKAGE_CMD $ICON_ARGS"
+fi
+
+# 执行打包
+eval $JPACKAGE_CMD
 
 if [ $? -ne 0 ]; then
     echo "❌ 打包失败"
