@@ -35,7 +35,7 @@
         <Label text="从资源管理器选中的文件夹:"/>
         <Button text="📋 从剪贴板获取文件夹" onAction="#getFoldersFromClipboard" 
                 style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20 10 20;"/>
-        <TextArea fx:id="selectedFoldersArea" promptText="选中文件夹后按Ctrl+C复制，然后点击上方按钮..." 
+        <TextArea fx:id="selectedFoldersArea" promptText="选中文件夹后按Ctrl+C (macOS: Cmd+C)复制，然后点击上方按钮..." 
                   editable="false" wrapText="true"
                   style="-fx-font-size: 12px; -fx-font-family: 'PingFang SC', 'STHeiti', 'Microsoft YaHei', 'Consolas'; -fx-text-fill: #333333;"
                   prefHeight="100"/>
@@ -68,13 +68,13 @@
             <Label text="【功能1：重命名文件夹】" style="-fx-font-weight: bold; -fx-text-fill: #4CAF50; -fx-font-size: 12px;" wrapText="true"/>
             <Label text="  1. 准备Excel文件，包含4列数据（A+B+C+D），将自动组合成文件夹名称" wrapText="true" style="-fx-font-size: 11px;"/>
             <Label text="  2. 在资源管理器中选中需要重命名的文件夹（可多选）" wrapText="true" style="-fx-font-size: 11px;"/>
-            <Label text="  3. 按 Ctrl+C 复制选中的文件夹" wrapText="true" style="-fx-font-size: 11px;"/>
+            <Label text="  3. 按 Ctrl+C (macOS: Cmd+C) 复制选中的文件夹" wrapText="true" style="-fx-font-size: 11px;"/>
             <Label text="  4. 点击'📋 从剪贴板获取文件夹'按钮" wrapText="true" style="-fx-font-size: 11px;"/>
             <Label text="  5. 点击'开始重命名文件夹'按钮" wrapText="true" style="-fx-font-size: 11px;"/>
             <Label text="" style="-fx-font-size: 3px;"/>
             <Label text="【功能2：重命名文件夹内的文件】" style="-fx-font-weight: bold; -fx-text-fill: #FF9800; -fx-font-size: 12px;" wrapText="true"/>
             <Label text="  1. 在资源管理器中选中需要处理的文件夹（可多选）" wrapText="true" style="-fx-font-size: 11px;"/>
-            <Label text="  2. 按 Ctrl+C 复制选中的文件夹" wrapText="true" style="-fx-font-size: 11px;"/>
+            <Label text="  2. 按 Ctrl+C (macOS: Cmd+C) 复制选中的文件夹" wrapText="true" style="-fx-font-size: 11px;"/>
             <Label text="  3. 点击'📋 从剪贴板获取文件夹'按钮" wrapText="true" style="-fx-font-size: 11px;"/>
             <Label text="  4. 点击'开始重命名文件'按钮" wrapText="true" style="-fx-font-size: 11px;"/>
             <Label text="  5. 文件将自动重命名为与文件夹相同的名称（保留原扩展名）" wrapText="true" style="-fx-font-size: 11px;"/>
@@ -83,7 +83,7 @@
             <Label text="" style="-fx-font-size: 3px;"/>
             <Label text="【功能3：分类文件到对应文件夹】" style="-fx-font-weight: bold; -fx-text-fill: #9C27B0; -fx-font-size: 12px;" wrapText="true"/>
             <Label text="  1. 在资源管理器中同时选中文件夹和文件（可多选）" wrapText="true" style="-fx-font-size: 11px;"/>
-            <Label text="  2. 按 Ctrl+C 复制选中的文件夹和文件" wrapText="true" style="-fx-font-size: 11px;"/>
+            <Label text="  2. 按 Ctrl+C (macOS: Cmd+C) 复制选中的文件夹和文件" wrapText="true" style="-fx-font-size: 11px;"/>
             <Label text="  3. 点击'📋 从剪贴板获取文件夹'按钮" wrapText="true" style="-fx-font-size: 11px;"/>
             <Label text="  4. 点击'分类文件到文件夹'按钮" wrapText="true" style="-fx-font-size: 11px;"/>
             <Label text="  5. 文件将自动移动到包含其名称的文件夹中" wrapText="true" style="-fx-font-size: 11px;"/>

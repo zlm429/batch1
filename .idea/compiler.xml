@@ -12,7 +12,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="batchfile_app" options="" />
+      <module name="batchfile_app" options="-Xlint:none" />
     </option>
   </component>
 </project>

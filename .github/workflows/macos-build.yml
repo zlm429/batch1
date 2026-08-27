@@ -1,0 +1,115 @@
+name: macOS Build
+
+on:
+  push:
+    tags:
+      - 'v*'  # 推送 tag 时自动触发（如 v1.0.0）
+  workflow_dispatch:  # 支持手动触发
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven  # 缓存 Maven 依赖，加速后续构建
+
+      - name: 设置 mvnw 可执行权限
+        run: chmod +x ./mvnw
+
+      - name: 编译项目
+        run: ./mvnw clean package -DskipTests
+
+      - name: 下载 JavaFX SDK
+        run: |
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "arm64" ]; then
+            PLATFORM="osx-aarch64"
+          else
+            PLATFORM="osx-x64"
+          fi
+          
+          # 带重试和超时的下载（最多重试3次）
+          for i in 1 2 3; do
+            echo "尝试下载 (第${i}次)..."
+            if curl -L --connect-timeout 30 --max-time 300 -o javafx-sdk.zip \
+               "https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_${PLATFORM}_bin-sdk.zip"; then
+              echo "下载成功"
+              break
+            fi
+            if [ "$i" -eq 3 ]; then
+              echo "官方源失败，尝试备用源..."
+              curl -L --connect-timeout 30 --max-time 300 -o javafx-sdk.zip \
+                "https://github.com/openjfx/javafx-sdk/releases/download/17.0.2/openjfx-17.0.2_${PLATFORM}_bin-sdk.zip" || exit 1
+            fi
+            sleep 5
+          done
+          unzip -o javafx-sdk.zip
+          
+          # 处理解压后的目录名
+          if [ -d "javafx-sdk-17.0.2_${PLATFORM}" ]; then
+            mv "javafx-sdk-17.0.2_${PLATFORM}" "javafx-sdk-17.0.2"
+          fi
+          
+          echo "JavaFX SDK 已就绪"
+          ls -la javafx-sdk-17.0.2/lib/
+
+      - name: 准备打包文件
+        run: |
+          mkdir -p target/jpackage-input
+          cp target/batchfile_app-0.0.1-SNAPSHOT.jar target/jpackage-input/
+          mkdir -p target/jpackage-input/lib
+          cp javafx-sdk-17.0.2/lib/*.dylib target/jpackage-input/lib/
+          echo "打包文件准备完成"
+
+      - name: 打包 DMG
+        run: |
+          JAVAFX_PATH="./javafx-sdk-17.0.2/lib"
+          
+          jpackage --input target/jpackage-input \
+                   --name BatchRenameTool \
+                   --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \
+                   --main-class com.rt.batchfile_app.BatchfileAppApplication \
+                   --dest target/dist \
+                   --type dmg \
+                   --app-version 1.0.0 \
+                   --vendor RT \
+                   --module-path "$JAVAFX_PATH" \
+                   --add-modules java.base,java.desktop,java.xml,jdk.unsupported,javafx.base,javafx.controls,javafx.fxml,javafx.graphics \
+                   --java-options "-Dfile.encoding=UTF-8" \
+                   --java-options "-Dprism.allowhidpi=false" \
+                   --verbose
+
+      - name: 上传 DMG 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: BatchRenameTool-DMG
+          path: target/dist/*.dmg
+          retention-days: 30
+
+      # 如果是 tag 推送，自动创建 GitHub Release
+      - name: 创建 Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/dist/*.dmg
+          name: "BatchRenameTool ${{ github.ref_name }}"
+          body: |
+            ## macOS 安装包
+            
+            ### 安装步骤：
+            1. 下载 `.dmg` 文件
+            2. 双击打开 DMG
+            3. 将 BatchRenameTool 拖拽到 Applications 文件夹
+            4. 首次运行：右键点击应用 → 选择"打开" → 再次点击"打开"
+            
+            > 注意：此应用未经 Apple 签名，首次打开需要手动允许
+          draft: false
+          prerelease: false
