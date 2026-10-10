@@ -100,14 +100,14 @@ jobs:
           echo "打包文件:"
           ls -la target/jpackage-input/
 
-      - name: 打包 DMG
+      - name: 打包 app-image
         run: |
           jpackage --input target/jpackage-input \
                    --name BatchRenameTool \
                    --main-jar batchfile_app-0.0.1-SNAPSHOT.jar \
                    --main-class com.rt.batchfile_app.BatchfileAppApplication \
                    --dest target/dist \
-                   --type dmg \
+                   --type app-image \
                    --app-version 1.0.0 \
                    --vendor RT \
                    --runtime-image target/runtime \
@@ -115,18 +115,43 @@ jobs:
                    --java-options "-Dprism.allowhidpi=false" \
                    --verbose
 
+      - name: 修改最低 macOS 版本为 10.15
+        run: |
+          PLIST="target/dist/BatchRenameTool.app/Contents/Info.plist"
+          echo "修改前:"
+          grep -A1 "LSMinimumSystemVersion" "$PLIST" || echo "未找到 LSMinimumSystemVersion"
+          
+          # 替换最低版本为 10.15
+          sed -i '' 's|<key>LSMinimumSystemVersion</key>|<key>LSMinimumSystemVersion</key><string>10.15</string>|; /LSMinimumSystemVersion/{n;/string/d}' "$PLIST"
+          
+          echo "修改后:"
+          grep -A1 "LSMinimumSystemVersion" "$PLIST"
+
+      - name: 创建 DMG
+        run: |
+          mkdir -p target/dmg-output
+          cp -R "target/dist/BatchRenameTool.app" "target/dmg-output/"
+          
+          hdiutil create -volname "BatchRenameTool" \
+                         -srcfolder "target/dmg-output" \
+                         -ov -format UDZO \
+                         "target/dist/BatchRenameTool-1.0.0.dmg"
+          
+          echo "DMG 大小:"
+          du -sh target/dist/BatchRenameTool-1.0.0.dmg
+
       - name: 上传 DMG 产物
         uses: actions/upload-artifact@v4
         with:
           name: BatchRenameTool-DMG
-          path: target/dist/*.dmg
+          path: target/dist/BatchRenameTool-1.0.0.dmg
           retention-days: 30
 
       - name: 创建 Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: target/dist/*.dmg
+          files: target/dist/BatchRenameTool-1.0.0.dmg
           name: "BatchRenameTool ${{ github.ref_name }}"
           body: |
             ## macOS 安装包
