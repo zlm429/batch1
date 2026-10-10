@@ -78,7 +78,7 @@ jobs:
 
       - name: 创建自定义运行时 (jlink)
         run: |
-          JMOD_DIR=$(find javafx-jmods -name "lib" -type d | head -1)
+          JMOD_DIR=$(find javafx-jmods -name "*.jmod" -type f | head -1 | xargs dirname)
           echo "jmod 目录: $JMOD_DIR"
 
           $JAVA_HOME/bin/jlink \
