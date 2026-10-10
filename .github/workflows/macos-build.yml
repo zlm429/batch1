@@ -119,10 +119,10 @@ jobs:
         run: |
           PLIST="target/dist/BatchRenameTool.app/Contents/Info.plist"
           echo "修改前:"
-          grep -A1 "LSMinimumSystemVersion" "$PLIST" || echo "未找到 LSMinimumSystemVersion"
+          grep -A1 "LSMinimumSystemVersion" "$PLIST"
           
-          # 替换最低版本为 10.15
-          sed -i '' 's|<key>LSMinimumSystemVersion</key>|<key>LSMinimumSystemVersion</key><string>10.15</string>|; /LSMinimumSystemVersion/{n;/string/d}' "$PLIST"
+          # 直接替换版本号
+          sed -i '' 's|<string>10.11</string>|<string>10.15</string>|g' "$PLIST"
           
           echo "修改后:"
           grep -A1 "LSMinimumSystemVersion" "$PLIST"
